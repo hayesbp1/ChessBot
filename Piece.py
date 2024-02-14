@@ -1,3 +1,5 @@
+import pygame
+
 class Piece:
     def __init__(self, color, position, board):
         self.color = color
@@ -5,6 +7,18 @@ class Piece:
         self.board = board
         self.en_passant_target = None
         self.hasMoved = False
+        # Load the image
+        image = pygame.image.load(f"Image/{color}-{self.__class__.__name__}.png")
+
+        # Get the current size
+        width, height = image.get_size()
+
+        # Scale the image to 75% of its original size
+        self.image = pygame.transform.scale(image, (int(width * 0.75), int(height * 0.75)))
+
+    def draw(self, win):
+        x, y = self.position
+        win.blit(self.image, (y * 100+2, x * 100))  # Draw the image at the correct position
 
     def move(self, piece, destination):
 
@@ -18,8 +32,6 @@ class Piece:
             piece.hasMoved = True
         else:
             self.en_passant_target = None
-
-
 
         if destination in piece.get_valid_moves():
             # If there's a piece at the destination square
@@ -239,22 +251,22 @@ class King(Piece):
             if self.position == (0, 4):
                 if destination == (0,2):
                     if self.board[0][0].name == 'Rook' and self.board[0][0].color == 'white' and not self.board[0][0].hasMoved:
-                        if self.pathIsClear(destination) and self.position not in opponents_moves and (0,3) not in opponent_moves and (0,2) not in opponent_moves:
+                        if self.pathIsClear(destination) and self.position not in opponent_moves and (0,3) not in opponent_moves and (0,2) not in opponent_moves:
                             return True
                 elif destination == (0,6):
                     if self.board[0][7].name == 'Rook' and self.board[0][7].color == 'white' and not self.board[0][7].hasMoved:
-                        if self.pathIsClear(destination) and self.position not in opponents_moves and (0,5) not in opponent_moves and (0,6) not in opponent_moves:
+                        if self.pathIsClear(destination) and self.position not in opponent_moves and (0,5) not in opponent_moves and (0,6) not in opponent_moves:
                             return True
             return False
         else:
             if self.position == (7, 4):
                 if destination == (7,2):
                     if self.board[7][0].name == 'Rook'and self.board[7][0].color == 'black' and not self.board[7][0].hasMoved:
-                        if self.pathIsClear(destination) and self.position not in opponents_moves and (7,3) not in opponent_moves and (7,2) not in opponent_moves:
+                        if self.pathIsClear(destination) and self.position not in opponent_moves and (7,3) not in opponent_moves and (7,2) not in opponent_moves:
                             return True
                 elif destination == (7,6):
                     if self.board[7][7].name == 'Rook' and self.board[7][7].color == 'black' and not self.board[7][7].hasMoved:
-                        if self.pathIsClear(destination) and self.position not in opponents_moves and (7,5) not in opponent_moves and (7,6) not in opponent_moves:
+                        if self.pathIsClear(destination) and self.position not in opponent_moves and (7,5) not in opponent_moves and (7,6) not in opponent_moves:
                             return True
             return False
             
