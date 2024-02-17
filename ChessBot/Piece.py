@@ -17,7 +17,7 @@ class Piece:
         else:
             raise ValueError("Invalid move")
         
-    def pathIsClear(self, destination):
+    def path_is_clear(self, destination):
         dx = 1 if destination[0] > self.position[0] else -1 if destination[0] < self.position[0] else 0
         dy = 1 if destination[1] > self.position[1] else -1 if destination[1] < self.position[1] else 0
         x, y = self.position[0], self.position[1]
@@ -36,38 +36,38 @@ class Pawn(Piece):
         self.name = 'Pawn'
 
     def get_valid_moves(self):
-        legal_moves = []
+        valid_moves = []
         x , y = self.position
         # Implement the rules for pawn movement
         if self.color == 'black' and x == 6:
-            if self.pathIsClear(self, (x-2, y)):
-                legal_moves.append((x-2, y))
-            elif self.pathIsClear(self, (x-1, y)):
-                legal_moves.append((x-1, y))
+            if self.path_is_clear(self, (x-2, y)):
+                valid_moves.append((x-2, y))
+            elif self.path_is_clear(self, (x-1, y)):
+                valid_moves.append((x-1, y))
         elif self.color == 'white' and x == 1:
-            if self.pathIsClear(self, (x+2, y)):
-                legal_moves.append((x+2, y))
-            elif self.pathIsClear(self, (x+1, y)):
-                legal_moves.append((x+1, y))
+            if self.path_is_clear(self, (x+2, y)):
+                valid_moves.append((x+2, y))
+            elif self.path_is_clear(self, (x+1, y)):
+                valid_moves.append((x+1, y))
         elif self.color == 'black':
-            if self.pathIsClear(self, (x-1, y)):
-                legal_moves.append((x-1, y))
+            if self.path_is_clear(self, (x-1, y)):
+                valid_moves.append((x-1, y))
         elif self.color == 'white':
-            if self.pathIsClear(self, (x+1, y)):
-                legal_moves.append((x+1, y))
+            if self.path_is_clear(self, (x+1, y)):
+                valid_moves.append((x+1, y))
         
         # Pawn captures
         if self.color == 'white':
             if self.board[x+1][y-1] is not None and self.board[x+1][y-1].color != self.color:
-                legal_moves.append((x+1, y-1))
+                valid_moves.append((x+1, y-1))
             if self.board[x+1][y+1] is not None and self.board[x+1][y+1].color != self.color:
-                legal_moves.append((x+1, y+1))
+                valid_moves.append((x+1, y+1))
         elif self.color == 'black':
             if self.board[x-1][y-1] is not None and self.board[x-1][y-1].color != self.color:
-                legal_moves.append((x-1, y-1))
+                valid_moves.append((x-1, y-1))
             if self.board[x-1][y+1] is not None and self.board[x-1][y+1].color != self.color:
-                legal_moves.append((x-1, y+1))
-        return legal_moves   
+                valid_moves.append((x-1, y+1))
+        return valid_moves   
     
 class Rook(Piece):
     def __init__(self, color, position, board):
@@ -76,7 +76,7 @@ class Rook(Piece):
 
     def get_valid_moves(self):
         # Initialize an empty list to store the legal moves
-        legal_moves = []
+        valid_moves = []
 
         # Define the directions in which the rook can move
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
@@ -91,12 +91,12 @@ class Rook(Piece):
                     # If the new position is occupied by an opponent's piece, capture it
                     if self.board[new_x][new_y] is not None:
                         if self.board[new_x][new_y].color != self.color:
-                            legal_moves.append((new_x, new_y))
+                            valid_moves.append((new_x, new_y))
                         break
                     else:
-                        legal_moves.append((new_x, new_y))
+                        valid_moves.append((new_x, new_y))
 
-        return legal_moves
+        return valid_moves
 
 class Bishop(Piece):
     def __init__(self, color, position, board):
@@ -105,7 +105,7 @@ class Bishop(Piece):
 
     # Implement the rules for bishop movement
     def get_valid_moves(self):
-        legal_moves = []
+        valid_moves = []
          # Define the directions in which the bishop can move
         directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
         for dx, dy in directions:
@@ -115,9 +115,9 @@ class Bishop(Piece):
 
                 if 0 <= new_x < 8 and 0 <= new_y < 8:
                     if self.board[new_x][new_y] is None:
-                        legal_moves.append((new_x, new_y))
+                        valid_moves.append((new_x, new_y))
                     elif self.board[new_x][new_y].color != self.color:
-                        legal_moves.append((new_x, new_y))
+                        valid_moves.append((new_x, new_y))
                         break
                     else:
                         break
@@ -128,14 +128,14 @@ class Knight(Piece):
         self.name = 'Knight'
 
     def get_valid_moves(self):
-        legal_moves = []
+        valid_moves = []
         directions = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]
         for dx, dy in directions:
             x, y = self.position[0] + dx, self.position[1] + dy
             if 0 <= x < 8 and 0 <= y < 8:  # Check if the move is within the board
                 if self.board[x][y] is None or self.board[x][y].color != self.color:  # Check if the square is empty or contains an opponent's piece
-                    legal_moves.append((x, y))
-        return legal_moves
+                    valid_moves.append((x, y))
+        return valid_moves
 
 class Queen(Piece):
     def __init__(self, color, position, board):
@@ -143,7 +143,7 @@ class Queen(Piece):
         self.name = 'Queen'
 
     def get_valid_moves(self):
-        legal_moves = []
+        valid_moves = []
         # Implement the rules for queen movement
         directions = [(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 1), (0, -1), (1, 0), (-1, 0)]
         for dx, dy in directions:
@@ -153,9 +153,9 @@ class Queen(Piece):
 
                 if 0 <= new_x < 8 and 0 <= new_y < 8:
                     if self.board[new_x][new_y] is None:
-                        legal_moves.append((new_x, new_y))
+                        valid_moves.append((new_x, new_y))
                     elif self.board[new_x][new_y].color != self.color:
-                        legal_moves.append((new_x, new_y))
+                        valid_moves.append((new_x, new_y))
                         break
                     else:
                         break
@@ -166,11 +166,11 @@ class King(Piece):
         self.name = 'King'
 
     def get_valid_moves(self):
-        legal_moves = []
+        valid_moves = []
         directions = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]
         # Implement the rules for king movement
         for dx, dy in directions:
             x, y = self.position[0] + dx, self.position[1] + dy
             if 0 <= x < 8 and 0 <= y < 8:  # Check if the move is within the board
                 if self.board[x][y] is None or self.board[x][y].color != self.color:  # Check if the square is empty or contains an opponent's piece
-                    legal_moves.append((x, y))
+                    valid_moves.append((x, y))
