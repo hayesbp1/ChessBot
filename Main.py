@@ -12,7 +12,7 @@ def main():
     # Set up the display
     win = pygame.display.set_mode((800, 800))  # Adjust to the size of your board
     square_size = 800 // 8
-
+ 
     # Game loop
     running = True
     selected_piece = None  # Variable to keep track of the currently selected piece
@@ -31,7 +31,7 @@ def main():
                 # Check if there is a piece at the clicked square
                 if clicked_piece is not None:
                     selected_piece = clicked_piece  # Set the selected piece
-                    board.highlighted_squares = clicked_piece.get_valid_moves()
+                    board.highlighted_squares = clicked_piece.get_valid_moves(board)
                     print(board.highlighted_squares)
                 elif (row, col) in board.highlighted_squares and selected_piece is not None:
                     selected_piece.move((row, col), board)

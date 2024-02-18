@@ -96,67 +96,21 @@ class Pawn(Piece):
         elif piece_type.upper() == 'N':
             self.board[self.position[0]][self.position[1]] = Knight(self.color, self.position, self.board)      
 
-    def get_valid_moves(self):
+    def get_valid_moves(self, board):
         valid_moves = []
         x , y = self.position
         # Implement the rules for pawn movement
-
-        if self.color == 'black':
-            if x == 6:
-                if self.path_is_clear((x-2, y)):
-                    valid_moves.append((x-2, y))
-            elif self.path_is_clear((x-1, y)):
-                valid_moves.append((x-1, y))
-            if self.path_is_clear((x-1, y)):
-                valid_moves.append((x-1, y))
-        elif self.color == 'white':
-            if x == 1:
-                if self.path_is_clear((x+2, y)):
-                    valid_moves.append((x+2, y))
-                elif self.path_is_clear((x+1, y)):
-                    valid_moves.append((x+1, y))
-            if self.path_is_clear((x+1, y)):
-                valid_moves.append((x+1, y))
-
-        # Pawn captures
+        direction = 1 if self.color == board.player_color else -1
         
-        if self.color == 'white':
-            new_x, new_y = x+1, y-1
-            if 0 <= new_x < 8 and 0 <= new_y < 8:
-                piece = self.board.get_piece(new_x, new_y)
-                if piece is not None and piece.color != self.color:
-                    valid_moves.append((new_x, new_y))
-            new_y = y+1
-            if 0 <= new_x < 8 and 0 <= new_y < 8:
-                piece = self.board.get_piece(new_x, new_y)
-                if piece is not None and piece.color != self.color:
-                    valid_moves.append((new_x, new_y)) 
-        elif self.color == 'black':
-            new_x, new_y = x-1, y-1
-            if 0 <= new_x < 8 and 0 <= new_y < 8:
-                piece = self.board.get_piece(new_x, new_y)
-                if piece is not None and piece.color != self.color:
-                    valid_moves.append((new_x, new_y))
-            new_y = y+1
-            if 0 <= new_x < 8 and 0 <= new_y < 8:
-                piece = self.board.get_piece(new_x, new_y)
-                if piece is not None and piece.color != self.color:
-                    valid_moves.append((new_x, new_y))
-
-        # En passant
-        if self.board.en_passant_target is not None:
-            if self.color == 'white' and x == 3:
-                if self.position[1] - 1 == self.board.en_passant_target[1] or self.position[1] + 1 == self.board.en_passant_target[1]:
-                    valid_moves.append((self.position[0] + 1, self.board.en_passant_target[1]))
-            elif self.color == 'black' and x == 6:
-                if self.position[1] - 1 == self.board.en_passant_target[1] or self.position[1] + 1 == self.board.en_passant_target[1]:
-                    valid_moves.append((self.position[0] - 1, self.board.en_passant_target[1]))      
+        if self.board.get_piece(x - direction, y) is None:
+            valid_moves.append((x - direction, y))
+            if self.hasMoved == False and self.board.get_piece(x - 2 * direction, y) is None:
+                valid_moves.append((x - 2 * direction, y))
         
         if valid_moves is None:  # If there are no valid moves
             return []  # Return an empty list
         else:
             return valid_moves 
-    
  
 class Rook(Piece):
     def __init__(self, color, position, board):

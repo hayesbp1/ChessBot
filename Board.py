@@ -11,10 +11,6 @@ class Board:
         self.en_passant_target = None
         self.turn = 0
         
-    # def highlight_square(self, win, move, color=(255, 165, 0)):
-    #     py.draw.rect(win, color, (move[1] * 100, move[0]* 100, 100, 100))
-    #     py.display.update()
-
     def setup_board(self, player_color):
         board = [[None] * 8 for _ in range(8)]
         if player_color == 'black':
