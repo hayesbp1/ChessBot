@@ -26,7 +26,8 @@ def main():
 
                 # Convert the screen coordinates to board coordinates
                 row, col = x // square_size, y // square_size
-                clicked_piece = board.get_piece(row,col)
+                piece = board.get_piece(row, col)
+                clicked_piece = piece if piece is not None and piece.color == board.get_current_player_color() else None
                 # Check if there is a piece at the clicked square
                 if clicked_piece is not None:
                     selected_piece = clicked_piece  # Set the selected piece

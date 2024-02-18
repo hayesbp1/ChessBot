@@ -9,7 +9,7 @@ class Board:
         self.board = self.setup_board(player_color)
         self.draw_board(py.display.set_mode((800, 800)))
         self.en_passant_target = None
-        
+        self.turn = 0
         
     # def highlight_square(self, win, move, color=(255, 165, 0)):
     #     py.draw.rect(win, color, (move[1] * 100, move[0]* 100, 100, 100))
@@ -83,6 +83,9 @@ class Board:
                 if piece is not None and piece.color != self.color and not isinstance(piece, Piece.King):
                     opponent_moves.extend(piece.get_valid_moves())
         return opponent_moves
+    
+    def get_current_player_color(self):
+        return 'white' if self.turn % 2 == 0 else 'black'
 
     def get_king(self, color):
         for row in self.board:

@@ -36,11 +36,13 @@ class Piece:
 
         if destination in self.get_valid_moves():
             # If there's a piece at the destination square
-            if self.board.get_piece(destination[0], destination[1]) is not None:
+            piece = self.board.get_piece(destination[0], destination[1])
+            if piece is not None:
                 # And the piece is the opponent's
-                if self.board.get_piece(destination[0], destination[1]).color != piece.color:
+                if piece.color != self.color:
                     # Remove the opponent's piece from the board
-                    self.board[destination[0]][destination[1]] = None
+                    piece = self.board.get_piece(destination[0], destination[1])
+                    piece = None
 
             # Save the current state of the board and piece
             old_position = self.position
@@ -50,6 +52,7 @@ class Piece:
             self.board.set_piece(None, self.position[0], self.position[1])
             board.set_piece(self, destination[0], destination[1])
             self.position = destination
+            board.turn += 1
         else:
             raise ValueError("Invalid move")
 
