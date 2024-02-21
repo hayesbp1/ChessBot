@@ -15,6 +15,9 @@ class Piece:
         # Scale the image to 75% of its original size
         self.image = pygame.transform.scale(image, (int(width * 0.75), int(height * 0.75)))
 
+    def get_direction(self):
+        return 1 if self.board.turn % 2 == 0 else -1
+    
     def draw(self, win):
         x, y = self.position
         win.blit(self.image, (y * 100, x * 100))  # Draw the image at the correct position
@@ -26,35 +29,35 @@ class Piece:
         if isinstance(self, Pawn) and abs(destination[0] - self.position[0]) == 2:
             board.en_passant_target = (self.position[0] + (destination[0] - self.position[0]) // 2, self.position[1])
         elif isinstance(self, King):
-            if self.canCastle() and destination[1] in [2, 6]:
+            if self.can_castle(destination) and destination[1] in [2, 6]:
                 self.castle(destination)
             self.hasMoved = True
         elif isinstance(self, Rook):
             self.hasMoved = True
         else:
             self.en_passant_target = None
+            
+      
+        # If there's a piece at the destination square
+        piece = self.board.get_piece(destination[0], destination[1])
+        if piece is not None:
+            # And the piece is the opponent's
+            if piece.color != self.color:
+                # Remove the opponent's piece from the board
+                piece = self.board.get_piece(destination[0], destination[1])
+                piece = None
 
-        if destination in self.get_valid_moves():
-            # If there's a piece at the destination square
-            piece = self.board.get_piece(destination[0], destination[1])
-            if piece is not None:
-                # And the piece is the opponent's
-                if piece.color != self.color:
-                    # Remove the opponent's piece from the board
-                    piece = self.board.get_piece(destination[0], destination[1])
-                    piece = None
+        # Save the current state of the board and piece
+        old_position = self.position
+        old_square = self.board.get_piece(destination[0], destination[1])
 
-            # Save the current state of the board and piece
-            old_position = self.position
-            old_square = self.board.get_piece(destination[0], destination[1])
+        # Move the piece to the destination square
+        self.board.set_piece(None, self.position[0], self.position[1])
+        board.set_piece(self, destination[0], destination[1])
+        self.position = destination
+        board.turn += 1
+        self.hasMoved = True
 
-            # Move the piece to the destination square
-            self.board.set_piece(None, self.position[0], self.position[1])
-            board.set_piece(self, destination[0], destination[1])
-            self.position = destination
-            board.turn += 1
-        else:
-            raise ValueError("Invalid move")
 
 
         
@@ -96,53 +99,56 @@ class Pawn(Piece):
         elif piece_type.upper() == 'N':
             self.board[self.position[0]][self.position[1]] = Knight(self.color, self.position, self.board)      
 
-    def get_valid_moves(self, board):
+    def get_valid_moves(self, consider_captures=False):
         valid_moves = []
         x , y = self.position
         # Implement the rules for pawn movement
-        direction = 1 if self.color == board.player_color else -1
-        
-        if self.board.get_piece(x - direction, y) is None:
-            valid_moves.append((x - direction, y))
-            if self.hasMoved == False and self.board.get_piece(x - 2 * direction, y) is None:
-                valid_moves.append((x - 2 * direction, y))
-        
-        if valid_moves is None:  # If there are no valid moves
-            return []  # Return an empty list
-        else:
-            return valid_moves 
- 
+        direction = self.board.white_direction if self.color == 'white' else self.board.black_direction
+
+        # Check if the move is within the board boundaries before getting the piece
+        if 0 <= x - direction < 8:
+            if self.board.get_piece(x - direction, y) is None and not consider_captures:
+                valid_moves.append((x - direction, y))
+                if not self.hasMoved and 0 <= x - 2 * direction < 8 and self.board.get_piece(x - 2 * direction, y) is None:
+                    valid_moves.append((x - 2 * direction, y))
+            if (0 <= y - 1 < 8 and self.board.get_piece(x - direction, y - 1) is not None and self.board.get_piece(x - direction, y - 1).color != self.color) or consider_captures:
+                valid_moves.append((x - direction, y - 1))
+            if (0 <= y + 1 < 8 and self.board.get_piece(x - direction, y + 1) is not None and self.board.get_piece(x - direction, y + 1).color != self.color) or consider_captures:
+                valid_moves.append((x - direction, y + 1))
+
+        return valid_moves if valid_moves else []  # Return an empty list if there are no valid moves
+
+
+
 class Rook(Piece):
     def __init__(self, color, position, board):
         super().__init__(color, position, board)
         self.name = 'Rook'
 
-    def get_valid_moves(self):
-        # Initialize an empty list to store the legal moves
+    
+    def get_valid_moves(self, consider_captures=False):
         valid_moves = []
-
         # Define the directions in which the rook can move
-        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         for dx, dy in directions:
             for step in range(1, 8):
                 new_x = self.position[0] + step * dx
                 new_y = self.position[1] + step * dy
-
-                # Check if the new position is within the board boundaries
                 if 0 <= new_x < 8 and 0 <= new_y < 8:
                     piece = self.board.get_piece(new_x, new_y)
-                    # If the new position is occupied by an opponent's piece, capture it
-                    if piece is not None:
-                        if piece.color != self.color:
-                            valid_moves.append((new_x, new_y))
-                        break
-                    else:
+                    if piece is None:
                         valid_moves.append((new_x, new_y))
-        if valid_moves is None:  # If there are no valid moves
-            return []  # Return an empty list
-        else:
-            return valid_moves 
+                    elif piece.color == self.color and consider_captures:
+                        valid_moves.append((new_x, new_y))
+                        break
+                    elif piece.color != self.color and not isinstance(piece, King):
+                        valid_moves.append((new_x, new_y))
+                        break
+                    elif piece.color != self.color and isinstance(piece, King):
+                        valid_moves.append((new_x, new_y))
+                    else:
+                        break        
+        return valid_moves if valid_moves else []  # Return an empty list if there are no valid moves
 
 class Bishop(Piece):
     def __init__(self, color, position, board):
@@ -150,7 +156,7 @@ class Bishop(Piece):
         self.name = 'Bishop'
 
     # Implement the rules for bishop movements
-    def get_valid_moves(self):
+    def get_valid_moves(self, consider_captures=False):
         valid_moves = []
         # Define the directions in which the bishop can move
         directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -162,22 +168,25 @@ class Bishop(Piece):
                     piece = self.board.get_piece(new_x, new_y)
                     if piece is None:
                         valid_moves.append((new_x, new_y))
-                    elif piece.color != self.color:
+                    elif piece.color == self.color and consider_captures:
                         valid_moves.append((new_x, new_y))
                         break
+                    elif piece.color != self.color and not isinstance(piece, King):
+                        valid_moves.append((new_x, new_y))
+                        break
+                    elif piece.color != self.color and isinstance(piece, King):
+                        valid_moves.append((new_x, new_y))
                     else:
                         break
-        if valid_moves is None:  # If there are no valid moves
-            return []  # Return an empty list
-        else:
-            return valid_moves 
+        return valid_moves if valid_moves else []  # Return an empty list if there are no valid moves
+ 
 
 class Knight(Piece):
     def __init__(self, color, position, board):
         super().__init__(color, position, board)
         self.name = 'Knight'
 
-    def get_valid_moves(self):
+    def get_valid_moves(self, consider_captures=False):
         valid_moves = []
         directions = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]
         for dx, dy in directions:
@@ -186,10 +195,12 @@ class Knight(Piece):
                 piece = self.board.get_piece(x, y)
                 if piece is None or piece.color != self.color:  # Check if the square is empty or contains an opponent's piece
                     valid_moves.append((x, y))
-        if valid_moves is None:  # If there are no valid moves
-            return []  # Return an empty list
-        else:
-            return valid_moves 
+                elif piece.color == self.color and consider_captures:
+                    valid_moves.append((x, y))
+                else:
+                    continue
+
+        return valid_moves if valid_moves else []  # Return an empty list if there are no valid moves
 
 
 class Queen(Piece):
@@ -197,7 +208,7 @@ class Queen(Piece):
         super().__init__(color, position, board)
         self.name = 'Queen'
 
-    def get_valid_moves(self):
+    def get_valid_moves(self, consider_captures=False):
         valid_moves = []
         # Implement the rules for queen movement
         directions = [(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 1), (0, -1), (1, 0), (-1, 0)]
@@ -210,15 +221,17 @@ class Queen(Piece):
                     piece = self.board.get_piece(new_x, new_y)
                     if piece is None:
                         valid_moves.append((new_x, new_y))
-                    elif piece.color != self.color:
+                    elif piece.color == self.color and consider_captures:
                         valid_moves.append((new_x, new_y))
                         break
+                    elif piece.color != self.color and not isinstance(piece, King):
+                        valid_moves.append((new_x, new_y))
+                        break
+                    elif piece.color != self.color and isinstance(piece, King):
+                        valid_moves.append((new_x, new_y))
                     else:
                         break
-        if valid_moves is None:  # If there are no valid moves
-            return []  # Return an empty list
-        else:
-            return valid_moves 
+        return valid_moves if valid_moves else []  # Return an empty list if there are no valid moves
 
 class King(Piece):
     def __init__(self, color, position, board):
@@ -226,7 +239,7 @@ class King(Piece):
         self.name = 'King'
         self.hasMoved = False
     
-    def canCastle(self, destination):
+    def can_castle(self, destination):
         opponent_moves = self.board.get_all_opponent_moves()
         if self.hasMoved:
             return False
@@ -253,10 +266,6 @@ class King(Piece):
                             return True
             return False
             
-    def isInCheck(self):
-        opponent_moves = self.board.get_all_opponent_moves()
-        return self.position in opponent_moves
-            
     def castle(self, destination):
         super().move(destination)
         x, y = self.position[0], self.position[1]
@@ -268,29 +277,29 @@ class King(Piece):
         Piece.hasMoved = True     
         
     def get_valid_moves(self):
-        # Calculate the valid moves...
         valid_moves = []
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
+        opponent_moves = self.get_all_opponent_moves()
+
         for dx, dy in directions:
             new_x, new_y = self.position[0] + dx, self.position[1] + dy
             if 0 <= new_x < 8 and 0 <= new_y < 8:
                 piece = self.board.get_piece(new_x, new_y)
-                if piece is None or (piece.color != self.color and not isinstance(piece, King)):
-                    # Check the square one step further
-                    further_x, further_y = new_x + dx, new_y + dy
-                    if 0 <= further_x < 8 and 0 <= further_y < 8:
-                        further_piece = self.board.get_piece(further_x, further_y)
-                        if further_piece is None or (further_piece.color != self.color and not isinstance(further_piece, King)):
-                            valid_moves.append((new_x, new_y))
-        return valid_moves
+                if (piece is None or (piece.color != self.color and not isinstance(piece, King))) and (new_x, new_y) not in opponent_moves:
+                    # Check if the new position is adjacent to the opponent's king
+                    is_adjacent_to_opponent_king = any(isinstance(self.board.get_piece(new_x + dx, new_y + dy), King) and self.board.get_piece(new_x + dx, new_y + dy).color != self.color for dx, dy in directions if 0 <= new_x + dx < 8 and 0 <= new_y + dy < 8)
+                    if not is_adjacent_to_opponent_king:
+                        valid_moves.append((new_x, new_y))
 
-    
-    
+        return valid_moves if valid_moves else []  # Return an empty list if there are no valid moves
+
+
     def get_all_opponent_moves(self):
         opponent_moves = []
-        for row in range(8):  # Assuming an 8x8 board
+        for row in range(8):  # 8x8 board
             for col in range(8):
                 piece = self.board.get_piece(row, col)
-                if piece is not None and piece.color != self.color:
-                    opponent_moves.extend(piece.get_valid_moves())
+                if piece is not None and piece.color != self.color and not isinstance(piece, King):
+                    opponent_moves.extend(piece.get_valid_moves(True))
         return opponent_moves
+

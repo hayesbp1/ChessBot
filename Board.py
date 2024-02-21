@@ -1,9 +1,12 @@
 import pygame as py
 import Piece
+import copy
 import ChessEngine
 
 class Board:
     def __init__(self, player_color):
+        self.black_direction = 0
+        self.white_direction = 0
         self.highlighted_squares = []
         self.player_color = player_color
         self.board = self.setup_board(player_color)
@@ -11,15 +14,18 @@ class Board:
         self.en_passant_target = None
         self.turn = 0
         
+        
     def setup_board(self, player_color):
         board = [[None] * 8 for _ in range(8)]
         if player_color == 'black':
+            self.white_direction = -1
+            self.black_direction = 1
             # Create and place the white pieces
             board[0][0] = Piece.Rook('white', (0, 0), self)
             board[0][1] = Piece.Knight('white', (0, 1), self)
             board[0][2] = Piece.Bishop('white', (0, 2), self)
-            board[0][3] = Piece.Queen('white', (0, 3), self)
-            board[0][4] = Piece.King('white', (0, 4), self)
+            board[0][3] = Piece.King('white', (0, 3), self)
+            board[0][4] = Piece.Queen('white', (0, 4), self)
             board[0][5] = Piece.Bishop('white', (0, 5), self)
             board[0][6] = Piece.Knight('white', (0, 6), self)
             board[0][7] = Piece.Rook('white', (0, 7), self)
@@ -29,8 +35,8 @@ class Board:
             board[7][0] = Piece.Rook('black', (7, 0), self)
             board[7][1] = Piece.Knight('black', (7, 1), self)
             board[7][2] = Piece.Bishop('black', (7, 2), self)
-            board[7][3] = Piece.Queen('black', (7, 3), self)
-            board[7][4] = Piece.King('black', (7, 4), self)
+            board[7][3] = Piece.King('black', (7, 3), self)
+            board[7][4] = Piece.Queen('black', (7, 4), self)
             board[7][5] = Piece.Bishop('black', (7, 5), self)
             board[7][6] = Piece.Knight('black', (7, 6), self)
             board[7][7] = Piece.Rook('black', (7, 7), self)
@@ -38,6 +44,8 @@ class Board:
                 board[6][i] = Piece.Pawn('black', (6, i), self)
             return board
         else:
+            self.white_direction = 1
+            self.black_direction = -1
             # Create and place the white pieces
             board[7][0] = Piece.Rook('white', (7, 0), self)
             board[7][1] = Piece.Knight('white', (7, 1), self)
@@ -61,6 +69,13 @@ class Board:
             for i in range(8):
                 board[1][i] = Piece.Pawn('black', (1, i), self)
             return board
+            
+    def undo_move(self):
+        if self.history:
+            # Revert to the previous game state
+            self.board = self.history.pop()
+        else:
+            print("No moves to undo.")
     
     def get_piece(self, row, col):
         piece = self.board[row][col]
@@ -72,11 +87,11 @@ class Board:
         self.board[row][col] = piece
 
     
-    def get_all_opponent_moves(self, color):
+    def get_all_opponent_moves(self):
         opponent_moves = []
         for row in self.board:
             for piece in row:
-                if piece is not None and piece.color != self.color and not isinstance(piece, Piece.King):
+                if piece is not None and piece.color != self.player_color and not isinstance(piece, Piece.King):
                     opponent_moves.extend(piece.get_valid_moves())
         return opponent_moves
     
@@ -88,6 +103,11 @@ class Board:
             for piece in row:
                 if piece is not None and piece.color == color and isinstance(piece, Piece.King):
                     return piece
+                
+    def is_in_check(self, color):
+        king = self.get_king(color)
+        opponent_moves = self.get_all_opponent_moves()
+        return king.position in opponent_moves
                 
     def get_square_color(self, row, col):
         # Check if the square is in the list of highlighted squares
