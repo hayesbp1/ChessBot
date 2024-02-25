@@ -5,6 +5,7 @@ import ChessEngine
 
 class Board:
     def __init__(self, player_color):
+        self.turn = 0
         self.black_direction = 0
         self.white_direction = 0
         self.highlighted_squares = []
@@ -12,7 +13,6 @@ class Board:
         self.board = self.setup_board(player_color)
         self.draw_board(py.display.set_mode((800, 800)))
         self.en_passant_target = None
-        self.turn = 0
         
         
     def setup_board(self, player_color):
@@ -119,6 +119,8 @@ class Board:
         # Check if the square is in the list of highlighted squares
         if (col, row) in self.highlighted_squares:
             return (255, 165, 0)  # Return the highlight color
+        elif self.is_in_check(self.get_current_player_color()) and self.get_king(self.get_current_player_color()).position == (col, row):
+            return (255, 0, 0)
         elif (row + col) % 2 == 0:
             return (255, 255, 255)  # Return the color for light squares
         else:
