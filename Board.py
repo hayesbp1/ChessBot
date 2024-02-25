@@ -96,7 +96,7 @@ class Board:
         for i, row in enumerate(self.board):
             for j, piece in enumerate(row):
                 if piece is not None and piece.color != color and not isinstance(piece, Piece.King):
-                    valid_moves = piece.get_valid_moves()
+                    valid_moves = piece.get_valid_moves(consider_captures = True)
                     opponent_moves.extend(valid_moves)
         return opponent_moves
 
