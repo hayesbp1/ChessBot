@@ -20,6 +20,8 @@ class Board:
         if player_color == 'black':
             self.white_direction = -1
             self.black_direction = 1
+            self.white_promotion_row = 7
+            self.black_promotion_row = 0
             # Create and place the white pieces
             board[0][0] = Piece.Rook('white', (0, 0), self)
             board[0][1] = Piece.Knight('white', (0, 1), self)
@@ -46,6 +48,8 @@ class Board:
         else:
             self.white_direction = 1
             self.black_direction = -1
+            self.white_promotion_row = 0
+            self.black_promotion_row = 7
             # Create and place the white pieces
             board[7][0] = Piece.Rook('white', (7, 0), self)
             board[7][1] = Piece.Knight('white', (7, 1), self)
@@ -87,13 +91,15 @@ class Board:
         self.board[row][col] = piece
 
     
-    def get_all_opponent_moves(self):
+    def get_all_opponent_moves(self, color):
         opponent_moves = []
-        for row in self.board:
-            for piece in row:
-                if piece is not None and piece.color != self.player_color and not isinstance(piece, Piece.King):
-                    opponent_moves.extend(piece.get_valid_moves())
+        for i, row in enumerate(self.board):
+            for j, piece in enumerate(row):
+                if piece is not None and piece.color != color and not isinstance(piece, Piece.King):
+                    valid_moves = piece.get_valid_moves()
+                    opponent_moves.extend(valid_moves)
         return opponent_moves
+
     
     def get_current_player_color(self):
         return 'white' if self.turn % 2 == 0 else 'black'
@@ -106,7 +112,7 @@ class Board:
                 
     def is_in_check(self, color):
         king = self.get_king(color)
-        opponent_moves = self.get_all_opponent_moves()
+        opponent_moves = self.get_all_opponent_moves(color)
         return king.position in opponent_moves
                 
     def get_square_color(self, row, col):

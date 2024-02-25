@@ -29,9 +29,10 @@ class Piece:
         if isinstance(self, Pawn) and abs(destination[0] - self.position[0]) == 2:
             board.en_passant_target = (self.position[0] + (destination[0] - self.position[0]) // 2, self.position[1])
         elif isinstance(self, King):
-            if self.can_castle(destination) and destination[1] in [2, 6]:
+            if abs(destination[1] - self.position[1]) == 2:
                 self.castle(destination)
             self.hasMoved = True
+
         elif isinstance(self, Rook):
             self.hasMoved = True
         else:
@@ -59,8 +60,6 @@ class Piece:
         self.hasMoved = True
 
 
-
-        
     def path_is_clear(self, destination):
         dx = 1 if destination[0] > self.position[0] else -1 if destination[0] < self.position[0] else 0
         dy = 1 if destination[1] > self.position[1] else -1 if destination[1] < self.position[1] else 0
@@ -84,8 +83,8 @@ class Pawn(Piece):
     def move(self, destination, board):
         super().move(destination, board)
         # Check for pawn promotion
-        if (self.color == 'white' and self.position[0] == 7) or (self.color == 'black' and self.position[0] == 0):
-            self.promote()
+        if (self.color == 'white' and self.position[0] == self.board.white_promotion_row) or (self.color == 'black' and self.position[0] == self.board.black_promotion_row):
+            self.promote(self)
 
     def promote(self):
         # Ask the player for the type of piece they want
@@ -239,47 +238,73 @@ class King(Piece):
         self.name = 'King'
         self.hasMoved = False
     
-    def can_castle(self, destination):
-        opponent_moves = self.board.get_all_opponent_moves()
+    def can_castle(self):
         if self.hasMoved:
-            return False
-        if self.color == 'white':
-            if self.position == (0, 4):
-                if destination == (0,2):
-                    if self.board[0][0].name == 'Rook' and self.board[0][0].color == 'white' and not self.board[0][0].hasMoved:
-                        if self.path_is_clear(destination) and self.position not in opponent_moves and (0,3) not in opponent_moves and (0,2) not in opponent_moves:
-                            return True
-                elif destination == (0,6):
-                    if self.board[0][7].name == 'Rook' and self.board[0][7].color == 'white' and not self.board[0][7].hasMoved:
-                        if self.path_is_clear(destination) and self.position not in opponent_moves and (0,5) not in opponent_moves and (0,6) not in opponent_moves:
-                            return True
-            return False
-        else:
-            if self.position == (7, 4):
-                if destination == (7,2):
-                    if self.board[7][0].name == 'Rook'and self.board[7][0].color == 'black' and not self.board[7][0].hasMoved:
-                        if self.path_is_clear(destination) and self.position not in opponent_moves and (7,3) not in opponent_moves and (7,2) not in opponent_moves:
-                            return True
-                elif destination == (7,6):
-                    if self.board[7][7].name == 'Rook' and self.board[7][7].color == 'black' and not self.board[7][7].hasMoved:
-                        if self.path_is_clear(destination) and self.position not in opponent_moves and (7,5) not in opponent_moves and (7,6) not in opponent_moves:
-                            return True
-            return False
-            
-    def castle(self, destination):
-        super().move(destination)
-        x, y = self.position[0], self.position[1]
+            return []
 
+        opponent_moves = self.board.get_all_opponent_moves(self.color)
+
+        # Define the potential castling moves based on the color
+        castling_moves = [(self.position[0], 2), (self.position[0], 6)] if self.board.player_color == 'white' else [(self.position[0], 1), (self.position[0], 5)]
+        valid_moves = []
+
+        for destination in castling_moves:
+            # Get the rook's position based on the destination and color
+            rook_position = (self.position[0], 0 if destination[1] in [1, 2] else 7)
+            rook = self.board.get_piece(rook_position[0], rook_position[1])
+
+            # Check if the rook is in the correct position and hasn't moved
+            if rook is None or rook.name != 'Rook' or rook.color != self.color or rook.hasMoved:
+                continue
+
+            # Check if the path is clear and not in opponent's moves
+            if not self.path_is_clear(rook_position):
+                continue
+
+            # Check if the king's current position and destination are not under attack
+            if all((self.position[0], i) not in opponent_moves for i in range(min(self.position[1], destination[1]), max(self.position[1], destination[1]) + 1)):
+                valid_moves.append(destination)
+
+        return valid_moves
+
+
+    def castle(self, destination):
+         # Get the rook based on the destination
+        rook_position = (self.position[0], 0 if destination[1] in [1, 2] else 7)
         if destination[1] == 2:
-            self.board[self.position[0]][0].move((self.position[0], 3))
+            new_rook_position = (self.position[0], 3)
         elif destination[1] == 6:
-            self.board[self.position[0]][7].move((self.position[0], 5))
-        Piece.hasMoved = True     
-        
+            new_rook_position = (self.position[0], 5)
+        elif destination[1] == 1:
+            new_rook_position = (self.position[0], 2)
+        else:
+            new_rook_position = (self.position[0], 4)
+
+        rook = self.board.get_piece(rook_position[0], rook_position[1])
+
+        # Remove the rook from its original position
+        self.board.set_piece(None, rook_position[0], rook_position[1])
+
+        # Set the rook to its new position
+        self.board.set_piece(rook, new_rook_position[0], new_rook_position[1])
+
+        # Manually update the rook's position
+        rook.position = new_rook_position
+
+        # Remove the king from its original position
+        self.board.set_piece(None, self.position[0], self.position[1])
+
+        # Set the king to its new position
+        self.board.set_piece(self, destination[0], destination[1])
+
+        # Manually update the king's position
+        self.position = destination
+        Piece.hasMoved = True
+
     def get_valid_moves(self):
         valid_moves = []
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-        opponent_moves = self.get_all_opponent_moves()
+        opponent_moves = self.board.get_all_opponent_moves(self.color)
 
         for dx, dy in directions:
             new_x, new_y = self.position[0] + dx, self.position[1] + dy
@@ -290,16 +315,9 @@ class King(Piece):
                     is_adjacent_to_opponent_king = any(isinstance(self.board.get_piece(new_x + dx, new_y + dy), King) and self.board.get_piece(new_x + dx, new_y + dy).color != self.color for dx, dy in directions if 0 <= new_x + dx < 8 and 0 <= new_y + dy < 8)
                     if not is_adjacent_to_opponent_king:
                         valid_moves.append((new_x, new_y))
-
+        
+        # Add castling moves to the list of valid moves
+        valid_moves.extend(self.can_castle())
+        
         return valid_moves if valid_moves else []  # Return an empty list if there are no valid moves
-
-
-    def get_all_opponent_moves(self):
-        opponent_moves = []
-        for row in range(8):  # 8x8 board
-            for col in range(8):
-                piece = self.board.get_piece(row, col)
-                if piece is not None and piece.color != self.color and not isinstance(piece, King):
-                    opponent_moves.extend(piece.get_valid_moves(True))
-        return opponent_moves
 
