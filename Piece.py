@@ -84,19 +84,23 @@ class Pawn(Piece):
         super().move(destination, board)
         # Check for pawn promotion
         if (self.color == 'white' and self.position[0] == self.board.white_promotion_row) or (self.color == 'black' and self.position[0] == self.board.black_promotion_row):
-            self.promote(self)
+            self.promote()
 
     def promote(self):
         # Ask the player for the type of piece they want
         piece_type = input("Promote pawn to (Q/R/B/N): ")
+
+        # Remove the pawn from the board
+        self.board.set_piece(None, self.position[0], self.position[1])
+
         if piece_type.upper() == 'Q':
-            self.board[self.position[0]][self.position[1]] = Queen(self.color, self.position, self.board)
+            self.board.set_piece(Queen(self.color, self.position, self.board), self.position[0], self.position[1])
         elif piece_type.upper() == 'R':
-            self.board[self.position[0]][self.position[1]] = Rook(self.color, self.position, self.board)
+            self.board.set_piece(Rook(self.color, self.position, self.board), self.position[0], self.position[1])
         elif piece_type.upper() == 'B':
-            self.board[self.position[0]][self.position[1]] = Bishop(self.color, self.position, self.board)
+            self.board.set_piece(Bishop(self.color, self.position, self.board), self.position[0], self.position[1])
         elif piece_type.upper() == 'N':
-            self.board[self.position[0]][self.position[1]] = Knight(self.color, self.position, self.board)      
+            self.board.set_piece(Knight(self.color, self.position, self.board), self.position[0], self.position[1])
 
     def get_valid_moves(self, consider_captures=False):
         valid_moves = []
