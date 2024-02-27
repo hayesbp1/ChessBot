@@ -7,7 +7,7 @@ class Piece:
         self.board = board
         self.hasMoved = False
         # Load the image
-        image = pygame.image.load(f"Image/{color}-{self.__class__.__name__}.png")
+        image = pygame.image.load(f"ChessBot/Image/{color}-{self.__class__.__name__}.png")
 
         # Get the current size
         width, height = image.get_size()
@@ -26,6 +26,18 @@ class Piece:
         return self.name
     
     def move(self, destination, board):
+        
+        # Save the current state of the board and piece
+        old_state = {
+        'position': self.position,
+        'destination': destination,
+        'piece': self,
+        'captured': board.get_piece(destination[0], destination[1]),
+        'en_passant_target': board.en_passant_target,
+        'hasMoved': self.hasMoved
+        }
+        board.history.append(old_state)
+
         if isinstance(self, Pawn) and abs(destination[0] - self.position[0]) == 2:
             board.en_passant_target = (self.position[0] + (destination[0] - self.position[0]) // 2, self.position[1])
         elif isinstance(self, King):

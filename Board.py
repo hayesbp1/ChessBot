@@ -8,6 +8,7 @@ class Board:
         self.turn = 0
         self.black_direction = 0
         self.white_direction = 0
+        self.history = []
         self.highlighted_squares = []
         self.player_color = player_color
         self.board = self.setup_board(player_color)
@@ -75,11 +76,19 @@ class Board:
             return board
             
     def undo_move(self):
-        if self.history:
-            # Revert to the previous game state
-            self.board = self.history.pop()
+        if not self.history:
+            return
+        last_move = self.history.pop()
+        piece = last_move['piece']
+        piece.position = last_move['position']
+        piece.hasMoved = last_move['hasMoved']
+        self.set_piece(piece, *piece.position)
+        if last_move['captured']:
+            self.set_piece(last_move['captured'], *last_move['destination'])
         else:
-            print("No moves to undo.")
+            self.set_piece(None, *last_move['destination'])
+        self.en_passant_target = last_move['en_passant_target']
+        self.turn -= 1
     
     def get_piece(self, row, col):
         piece = self.board[row][col]
@@ -100,7 +109,29 @@ class Board:
                     opponent_moves.extend(valid_moves)
         return opponent_moves
 
+    def get_all_player_moves(self, color):
+        player_moves = []
+        for i, row in enumerate(self.board):
+            for j, piece in enumerate(row):
+                if piece is not None and piece.color == color:
+                    valid_moves = piece.get_valid_moves()
+                    for move in valid_moves:
+                        piece.move(move, self)
+                        if not self.is_in_check(color):
+                            player_moves.append(move)
+                        self.undo_move()
+        return player_moves
     
+    def get_piece_valid_moves(self, piece):
+        valid_moves = []
+        piece_moves = piece.get_valid_moves()
+        for move in piece_moves:
+            piece.move(move, self)
+            if not self.is_in_check(piece.color):
+                valid_moves.append(move)
+            self.undo_move()
+        return valid_moves
+
     def get_current_player_color(self):
         return 'white' if self.turn % 2 == 0 else 'black'
 
@@ -137,3 +168,11 @@ class Board:
                     piece.draw(win)
         py.display.update()
     
+    def check_threefold_repetition(self):
+        # Convert the history to a string format for comparison
+        history_str = ['|'.join(map(str, row)) for row in self.history]
+        history_str = ','.join(history_str)
+        # Count the occurrences of each board state
+        board_counts = {state: history_str.count(state) for state in history_str}
+        # Check if any board state appears three times
+        return any(count >= 3 for count in board_counts.values())
