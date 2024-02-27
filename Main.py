@@ -6,6 +6,7 @@ import pygame.font
 def main():
     board = Board('white')
     gameOver = False
+    winner = None
 
     # Initialize Pygame
     pygame.init()
@@ -50,7 +51,7 @@ def main():
                     selected_piece.move((row, col), board)
                     board.highlighted_squares = []
 
-                     # After a move is made, check for threefold repetition
+                    # After a move is made, check for threefold repetition
                     if board.check_threefold_repetition():
                         print("Draw due to threefold repetition!")
                         gameOver = True

@@ -9,6 +9,7 @@ class Board:
         self.black_direction = 0
         self.white_direction = 0
         self.history = []
+        self.state = []
         self.highlighted_squares = []
         self.player_color = player_color
         self.board = self.setup_board(player_color)
@@ -99,7 +100,6 @@ class Board:
     def set_piece(self, piece, row, col):
         self.board[row][col] = piece
 
-    
     def get_all_opponent_moves(self, color):
         opponent_moves = []
         for i, row in enumerate(self.board):
@@ -116,7 +116,7 @@ class Board:
                 if piece is not None and piece.color == color:
                     valid_moves = piece.get_valid_moves()
                     for move in valid_moves:
-                        piece.move(move, self)
+                        piece.move(move, self, True)
                         if not self.is_in_check(color):
                             player_moves.append(move)
                         self.undo_move()
@@ -126,7 +126,7 @@ class Board:
         valid_moves = []
         piece_moves = piece.get_valid_moves()
         for move in piece_moves:
-            piece.move(move, self)
+            piece.move(move, self, True)
             if not self.is_in_check(piece.color):
                 valid_moves.append(move)
             self.undo_move()
@@ -168,11 +168,26 @@ class Board:
                     piece.draw(win)
         py.display.update()
     
+    # Define a function to represent a board state uniquely
+    def get_state_key(self):
+        """Composes a key for a board state based on piece types and their positions."""
+        pieces = []
+        for i, row in enumerate(self.board):
+            for j, piece in enumerate(row):
+                if piece is not None:  # Check if the square is not empty
+                    pieces.append(f"{piece.piece_type}{i}{j}")  # Append the piece type and its position
+        return ''.join(pieces)
+
+
     def check_threefold_repetition(self):
-        # Convert the history to a string format for comparison
-        history_str = ['|'.join(map(str, row)) for row in self.history]
-        history_str = ','.join(history_str)
-        # Count the occurrences of each board state
-        board_counts = {state: history_str.count(state) for state in history_str}
-        # Check if any board state appears three times
-        return any(count >= 3 for count in board_counts.values())
+        # Check if there are enough moves for potential repetition (at least 3)
+        if len(self.state) < 3:
+            return False
+
+        # Generate the current state key
+        current_state_key = self.get_state_key()
+        print(current_state_key)
+
+        # Check for repetition
+        print(self.state)
+        return self.state.count(current_state_key) >= 2

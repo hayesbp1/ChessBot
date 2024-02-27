@@ -7,7 +7,7 @@ class Piece:
         self.board = board
         self.hasMoved = False
         # Load the image
-        image = pygame.image.load(f"ChessBot/Image/{color}-{self.__class__.__name__}.png")
+        image = pygame.image.load(f"Image/{color}-{self.__class__.__name__}.png")
 
         # Get the current size
         width, height = image.get_size()
@@ -25,7 +25,7 @@ class Piece:
     def get_name(self):
         return self.name
     
-    def move(self, destination, board):
+    def move(self, destination, board, theoretical_move=False):
         
         # Save the current state of the board and piece
         old_state = {
@@ -37,6 +37,8 @@ class Piece:
         'hasMoved': self.hasMoved
         }
         board.history.append(old_state)
+        if not theoretical_move:
+            board.state.append(board.get_state_key())
 
         if isinstance(self, Pawn) and abs(destination[0] - self.position[0]) == 2:
             board.en_passant_target = (self.position[0] + (destination[0] - self.position[0]) // 2, self.position[1])
@@ -90,10 +92,11 @@ class Pawn(Piece):
     def __init__(self, color, position, board):
         super().__init__(color, position, board)
         self.name = 'Pawn'
+        self.piece_type = 'P'
     
     # Pawn promotion
-    def move(self, destination, board):
-        super().move(destination, board)
+    def move(self, destination, board, theoretical_move=False):
+        super().move(destination, board, theoretical_move)
         # Check for pawn promotion
         if (self.color == 'white' and self.position[0] == self.board.white_promotion_row) or (self.color == 'black' and self.position[0] == self.board.black_promotion_row):
             self.promote()
@@ -139,8 +142,8 @@ class Rook(Piece):
     def __init__(self, color, position, board):
         super().__init__(color, position, board)
         self.name = 'Rook'
+        self.piece_type = 'R'
 
-    
     def get_valid_moves(self, consider_captures=False):
         valid_moves = []
         # Define the directions in which the rook can move
@@ -169,6 +172,7 @@ class Bishop(Piece):
     def __init__(self, color, position, board):
         super().__init__(color, position, board)
         self.name = 'Bishop'
+        self.piece_type = 'B'
 
     # Implement the rules for bishop movements
     def get_valid_moves(self, consider_captures=False):
@@ -200,6 +204,7 @@ class Knight(Piece):
     def __init__(self, color, position, board):
         super().__init__(color, position, board)
         self.name = 'Knight'
+        self.piece_type = 'N'
 
     def get_valid_moves(self, consider_captures=False):
         valid_moves = []
@@ -222,6 +227,7 @@ class Queen(Piece):
     def __init__(self, color, position, board):
         super().__init__(color, position, board)
         self.name = 'Queen'
+        self.piece_type = 'Q'
 
     def get_valid_moves(self, consider_captures=False):
         valid_moves = []
@@ -253,6 +259,7 @@ class King(Piece):
         super().__init__(color, position, board)
         self.name = 'King'
         self.hasMoved = False
+        self.piece_type = 'K'
     
     def can_castle(self):
         if self.hasMoved:
