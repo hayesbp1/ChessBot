@@ -90,7 +90,7 @@ class Board:
             self.set_piece(None, *last_move['destination'])
         self.en_passant_target = last_move['en_passant_target']
         self.turn -= 1
-    
+        
     def get_piece(self, row, col):
         piece = self.board[row][col]
         if piece is None:
@@ -186,8 +186,6 @@ class Board:
 
         # Generate the current state key
         current_state_key = self.get_state_key()
-        print(current_state_key)
-
+        
         # Check for repetition
-        print(self.state)
         return self.state.count(current_state_key) >= 2

@@ -34,8 +34,9 @@ class Piece:
         'piece': self,
         'captured': board.get_piece(destination[0], destination[1]),
         'en_passant_target': board.en_passant_target,
-        'hasMoved': self.hasMoved
+        'hasMoved': self.hasMoved,
         }
+        
         board.history.append(old_state)
         if not theoretical_move:
             board.state.append(board.get_state_key())
@@ -44,7 +45,8 @@ class Piece:
             board.en_passant_target = (self.position[0] + (destination[0] - self.position[0]) // 2, self.position[1])
         elif isinstance(self, King):
             if abs(destination[1] - self.position[1]) == 2:
-                self.castle(destination)
+                if not theoretical_move:
+                    self.castle(destination)
             self.hasMoved = True
 
         elif isinstance(self, Rook):
