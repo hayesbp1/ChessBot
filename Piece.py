@@ -42,8 +42,17 @@ class Piece:
             board.state.append(board.get_state_key())
 
         if isinstance(self, Pawn) and abs(destination[0] - self.position[0]) == 2:
-            board.en_passant_target = (self.position[0] + (destination[0] - self.position[0]) // 2, self.position[1])
-        elif isinstance(self, King):
+            direction = self.board.black_direction if self.color == 'black' else self.board.white_direction
+            if not theoretical_move:
+                board.en_passant_target = (self.position[0] - direction, self.position[1])
+        elif isinstance(self, Pawn) and destination == board.en_passant_target and not theoretical_move:
+            direction = self.board.black_direction if self.color == 'black' else self.board.white_direction
+            if destination == board.en_passant_target:
+                    board.set_piece(None, destination[0] +  direction, destination[1])
+        else:
+            board.en_passant_target = None
+
+        if isinstance(self, King):
             if abs(destination[1] - self.position[1]) == 2:
                 if not theoretical_move:
                     self.castle(destination)
@@ -131,9 +140,9 @@ class Pawn(Piece):
                 valid_moves.append((x - direction, y))
                 if not self.hasMoved and 0 <= x - 2 * direction < 8 and self.board.get_piece(x - 2 * direction, y) is None:
                     valid_moves.append((x - 2 * direction, y))
-            if (0 <= y - 1 < 8 and self.board.get_piece(x - direction, y - 1) is not None and self.board.get_piece(x - direction, y - 1).color != self.color) or consider_captures:
+            if (0 <= y - 1 < 8 and ((self.board.get_piece(x - direction, y - 1) is not None and self.board.get_piece(x - direction, y - 1).color != self.color) or (self.board.en_passant_target == (x - direction, y - 1)))) or consider_captures:
                 valid_moves.append((x - direction, y - 1))
-            if (0 <= y + 1 < 8 and self.board.get_piece(x - direction, y + 1) is not None and self.board.get_piece(x - direction, y + 1).color != self.color) or consider_captures:
+            if (0 <= y + 1 < 8 and ((self.board.get_piece(x - direction, y + 1) is not None and self.board.get_piece(x - direction, y + 1).color != self.color) or (self.board.en_passant_target == (x - direction, y + 1)))) or consider_captures:
                 valid_moves.append((x - direction, y + 1))
 
         return valid_moves if valid_moves else []  # Return an empty list if there are no valid moves

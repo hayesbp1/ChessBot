@@ -8,13 +8,14 @@ class Board:
         self.turn = 0
         self.black_direction = 0
         self.white_direction = 0
+        self.en_passant_target = None
         self.history = []
         self.state = []
         self.highlighted_squares = []
         self.player_color = player_color
         self.board = self.setup_board(player_color)
         self.draw_board(py.display.set_mode((800, 800)))
-        self.en_passant_target = None
+        
         
         
     def setup_board(self, player_color):
@@ -149,7 +150,7 @@ class Board:
     def get_square_color(self, row, col):
         # Check if the square is in the list of highlighted squares
         if (col, row) in self.highlighted_squares:
-            return (255, 165, 0)  # Return the highlight color
+            return (0, 0, 128)  # Return the highlight color
         elif self.is_in_check(self.get_current_player_color()) and self.get_king(self.get_current_player_color()).position == (col, row):
             return (255, 0, 0)
         elif (row + col) % 2 == 0:

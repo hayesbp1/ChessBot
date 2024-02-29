@@ -75,9 +75,9 @@ def main():
         # If the game is over, display the winner and update the display
         if gameOver:
             if winner:
-                textsurface = myfont.render(f'{winner} wins!', False, (255, 223, 0))
+                textsurface = myfont.render(f'{winner} wins!', False, (255, 0, 0))
             else:
-                textsurface = myfont.render('It\'s a draw!', False, (255, 223, 0))
+                textsurface = myfont.render('It\'s a draw!', False, (255, 0, 0))
 
             # Calculate the center coordinates
             text_rect = textsurface.get_rect(center=(win.get_width()/2, win.get_height()/2))
