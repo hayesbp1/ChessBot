@@ -1,36 +1,35 @@
 from Board import Board
 from Piece import Rook, Knight, Bishop, Queen, King, Pawn
+from ChessEngine import evaluate_board, get_best_move
 import pygame
 import pygame.font
 
 def main():
     board = Board('white')
-    gameOver = False
     winner = None
 
-    # Initialize Pygame
-    pygame.init()
- 
+    pygame.display.init()
+    pygame.font.init()
+    
     # Set up the display
     win = pygame.display.set_mode((800, 800))  # Adjust to the size of your board
     square_size = 800 // 8
 
     # Initialize font; must be called after 'pygame.init()' to avoid 'Font not Initialized' error
-    myfont = pygame.font.SysFont('Comic Sans MS', 100)
+    myfont = pygame.font.SysFont('Helvetica', 100)
  
     # Game loop
     running = True
     selected_piece = None  # Variable to keep track of the currently selected piece
     in_check = False  # Variable to keep track of whether the current player is in check
-    
-    # Initialize player_moves with the valid moves for the starting player
-    player_moves = board.get_all_player_moves(board.get_current_player_color())
+    valid_moves = []
     
     while running:
+        player_moves = board.get_all_player_moves(board.get_current_player_color())
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and not gameOver:  # Add this condition
+            elif event.type == pygame.MOUSEBUTTONDOWN and not board.is_game_over:  # Add this condition
                 # Get the position of the mouse click
                 y, x = pygame.mouse.get_pos()
                 # Convert the screen coordinates to board coordinates
@@ -38,42 +37,76 @@ def main():
 
                 # Get the piece at the clicked square
                 piece = board.get_piece(row, col)
-                clicked_piece = piece if piece is not None and piece.color == board.get_current_player_color() else None
                 
-                if clicked_piece is not None:
-                    selected_piece = clicked_piece  # Set the selected piece
-                    player_moves = board.get_piece_valid_moves(selected_piece)
-                    board.highlighted_squares = player_moves
+                # ...
 
+                if selected_piece is None:
+                    clicked_piece = piece if piece is not None and piece.color == board.get_current_player_color() else None
+                    if clicked_piece is not None:
+                        selected_piece = clicked_piece  # Set the selected piece
+                        valid_moves = [move for p, move in player_moves if p == selected_piece]
+                        print(f"Selected piece: {selected_piece}, Valid moves: {valid_moves}")  # Debugging statement
+                        board.highlighted_squares = valid_moves
+                else:
+                    print(f"Valid moves before checking: {valid_moves}")  # Debugging statement
+                    if (row, col) in valid_moves:
+                        selected_piece.move((row, col), board)
+                        board.highlighted_squares = []
+                        selected_piece = None
+                    else:
+                        clicked_piece = piece if piece is not None and piece.color == board.get_current_player_color() else None
+                        if clicked_piece is not None:
+                            selected_piece = clicked_piece  # Set the selected piece
+                            valid_moves = [move for p, move in player_moves if p == selected_piece]
+                            print(f"Selected piece: {selected_piece}, Valid moves: {valid_moves}")  # Debugging statement
+                            board.highlighted_squares = valid_moves
+                        else:
+                            selected_piece = None
+                            board.highlighted_squares = []
 
-                elif (row, col) in board.highlighted_squares and (row, col) in player_moves and selected_piece is not None:
-
-                    selected_piece.move((row, col), board)
-                    board.highlighted_squares = []
+# ...
 
                     # After a move is made, check for threefold repetition
                     if board.check_threefold_repetition():
                         print("Draw due to threefold repetition!")
-                        gameOver = True
-                    
-                    # Calculate the new possible moves after a move is made
-                    player_moves = board.get_all_player_moves(board.get_current_player_color())
+                        board.is_game_over = True
 
                     # If there are no valid moves, check for checkmate or stalemate
                     if not player_moves:
                         if board.is_in_check(board.get_current_player_color()):
-                            gameOver = True
+                            board.is_game_over= True
                             winner = "White" if board.get_current_player_color() == 'black' else "Black"
                             print(f"Checkmate! {winner} wins!")
                         else:
                             print("Stalemate! It's a draw!")
-                            gameOver = True
+                            board.is_game_over = True
+                            
+        # Check if it's the AI player's turn
+        if board.get_current_player_color() == 'black' and not board.is_game_over:
+            # Make the AI move
+            ai_move = get_best_move(board, depth=3)  # Adjust the depth as needed
+            piece, move = ai_move
+            piece.move(move, board)
+            board.highlighted_squares = []
 
+            # Check for game over conditions after the AI move
+            if board.check_threefold_repetition():
+                print("Draw due to threefold repetition!")
+                board.is_game_over = True
+            elif not player_moves:
+                if board.is_in_check(board.get_current_player_color()):
+                    board.is_game_over = True
+                    winner = "White"
+                    print("Checkmate! White wins!")
+                else:
+                    print("Stalemate! It's a draw!")
+                    board.is_game_over = True
+        
         # Draw the board
         board.draw_board(win)
 
         # If the game is over, display the winner and update the display
-        if gameOver:
+        if board.is_game_over:
             if winner:
                 textsurface = myfont.render(f'{winner} wins!', False, (255, 0, 0))
             else:

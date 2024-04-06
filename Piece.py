@@ -109,7 +109,7 @@ class Pawn(Piece):
     def move(self, destination, board, theoretical_move=False):
         super().move(destination, board, theoretical_move)
         # Check for pawn promotion
-        if (self.color == 'white' and self.position[0] == self.board.white_promotion_row) or (self.color == 'black' and self.position[0] == self.board.black_promotion_row):
+        if ((self.color == 'white' and self.position[0] == self.board.white_promotion_row) or (self.color == 'black' and self.position[0] == self.board.black_promotion_row)) and not theoretical_move:
             self.promote()
 
     def promote(self):

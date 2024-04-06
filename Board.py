@@ -1,11 +1,10 @@
 import pygame as py
 import Piece
-import copy
-import ChessEngine
 
 class Board:
     def __init__(self, player_color):
         self.turn = 0
+        self.is_game_over = False
         self.black_direction = 0
         self.white_direction = 0
         self.en_passant_target = None
@@ -112,15 +111,13 @@ class Board:
 
     def get_all_player_moves(self, color):
         player_moves = []
-        for i, row in enumerate(self.board):
-            for j, piece in enumerate(row):
+        for row in range(8):
+            for col in range(8):
+                piece = self.get_piece(row, col)
                 if piece is not None and piece.color == color:
                     valid_moves = piece.get_valid_moves()
                     for move in valid_moves:
-                        piece.move(move, self, True)
-                        if not self.is_in_check(color):
-                            player_moves.append(move)
-                        self.undo_move()
+                        player_moves.append((piece, move))
         return player_moves
     
     def get_piece_valid_moves(self, piece):
