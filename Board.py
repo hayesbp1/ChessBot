@@ -8,6 +8,7 @@ class Board:
         self.black_direction = 0
         self.white_direction = 0
         self.en_passant_target = None
+        self.last_opponent_move = None
         self.history = []
         self.state = []
         self.highlighted_squares = []
@@ -148,6 +149,8 @@ class Board:
         # Check if the square is in the list of highlighted squares
         if (col, row) in self.highlighted_squares:
             return (0, 0, 128)  # Return the highlight color
+        elif self.last_opponent_move == (col, row):
+            return (166, 0, 255)  # Return the highlight color for opponent's last move
         elif self.is_in_check(self.get_current_player_color()) and self.get_king(self.get_current_player_color()).position == (col, row):
             return (255, 0, 0)
         elif (row + col) % 2 == 0:

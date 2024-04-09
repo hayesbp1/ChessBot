@@ -163,11 +163,21 @@ def minimax(board, depth, alpha, beta, maximizing_player):
 def get_best_move(board, depth):
     best_score = float('-inf')
     best_move = None
-    for piece, move in board.get_all_player_moves(board.get_current_player_color()):
+    original_turn = board.turn  # Store the original turn value
+    current_player_color = board.get_current_player_color()  # Store the current player color
+
+    valid_moves = board.get_all_player_moves(current_player_color)
+    if not valid_moves:
+        return None  # Return None when there are no valid moves
+
+    for piece, move in valid_moves:
         piece.move(move, board, True)
-        score = minimax(board, depth - 1, float('-inf'), float('inf'), False)
+        if not board.is_in_check(current_player_color):
+            score = minimax(board, depth - 1, float('-inf'), float('inf'), False)
+            if score > best_score:
+                best_score = score
+                best_move = (piece, move)
         board.undo_move()
-        if score > best_score:
-            best_score = score
-            best_move = (piece, move)
+        board.turn = original_turn  # Restore the original turn value
+
     return best_move

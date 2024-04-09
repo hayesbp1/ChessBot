@@ -37,63 +37,49 @@ def main():
 
                 # Get the piece at the clicked square
                 piece = board.get_piece(row, col)
-                
-                # ...
-
+    
                 if selected_piece is None:
                     clicked_piece = piece if piece is not None and piece.color == board.get_current_player_color() else None
                     if clicked_piece is not None:
                         selected_piece = clicked_piece  # Set the selected piece
                         valid_moves = [move for p, move in player_moves if p == selected_piece]
-                        print(f"Selected piece: {selected_piece}, Valid moves: {valid_moves}")  # Debugging statement
                         board.highlighted_squares = valid_moves
                 else:
-                    print(f"Valid moves before checking: {valid_moves}")  # Debugging statement
                     if (row, col) in valid_moves:
                         selected_piece.move((row, col), board)
                         board.highlighted_squares = []
+                        board.draw_board(win)
                         selected_piece = None
                     else:
                         clicked_piece = piece if piece is not None and piece.color == board.get_current_player_color() else None
                         if clicked_piece is not None:
                             selected_piece = clicked_piece  # Set the selected piece
                             valid_moves = [move for p, move in player_moves if p == selected_piece]
-                            print(f"Selected piece: {selected_piece}, Valid moves: {valid_moves}")  # Debugging statement
                             board.highlighted_squares = valid_moves
                         else:
                             selected_piece = None
                             board.highlighted_squares = []
 
-# ...
+        # Check for game over conditions after the AI move
+        if board.check_threefold_repetition():
+            print("Draw due to threefold repetition!")
+            board.is_game_over = True
+        elif not player_moves:
+            if board.is_in_check(board.get_current_player_color()):
+                board.is_game_over = True
+                winner = "White"
+                print("Checkmate! White wins!")
+            else:
+                print("Stalemate! It's a draw!")
+                board.is_game_over = True
 
-                    # After a move is made, check for threefold repetition
-                    if board.check_threefold_repetition():
-                        print("Draw due to threefold repetition!")
-                        board.is_game_over = True
-
-                    # If there are no valid moves, check for checkmate or stalemate
-                    if not player_moves:
-                        if board.is_in_check(board.get_current_player_color()):
-                            board.is_game_over= True
-                            winner = "White" if board.get_current_player_color() == 'black' else "Black"
-                            print(f"Checkmate! {winner} wins!")
-                        else:
-                            print("Stalemate! It's a draw!")
-                            board.is_game_over = True
-                            
+        # Check if it's the AI player's turn
         # Check if it's the AI player's turn
         if board.get_current_player_color() == 'black' and not board.is_game_over:
             # Make the AI move
             ai_move = get_best_move(board, depth=3)  # Adjust the depth as needed
-            piece, move = ai_move
-            piece.move(move, board)
-            board.highlighted_squares = []
-
-            # Check for game over conditions after the AI move
-            if board.check_threefold_repetition():
-                print("Draw due to threefold repetition!")
-                board.is_game_over = True
-            elif not player_moves:
+            if ai_move is None:
+            # The AI player has no valid moves
                 if board.is_in_check(board.get_current_player_color()):
                     board.is_game_over = True
                     winner = "White"
@@ -101,7 +87,11 @@ def main():
                 else:
                     print("Stalemate! It's a draw!")
                     board.is_game_over = True
-        
+            else:
+                piece, move = ai_move
+                piece.move(move, board)
+                board.highlighted_squares = []
+
         # Draw the board
         board.draw_board(win)
 

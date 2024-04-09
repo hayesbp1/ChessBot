@@ -40,6 +40,7 @@ class Piece:
         board.history.append(old_state)
         if not theoretical_move:
             board.state.append(board.get_state_key())
+            board.last_opponent_move = destination
 
         if isinstance(self, Pawn) and abs(destination[0] - self.position[0]) == 2:
             direction = self.board.black_direction if self.color == 'black' else self.board.white_direction
@@ -81,6 +82,7 @@ class Piece:
         self.board.set_piece(None, self.position[0], self.position[1])
         board.set_piece(self, destination[0], destination[1])
         self.position = destination
+        
         board.turn += 1
         self.hasMoved = True
 
@@ -109,12 +111,19 @@ class Pawn(Piece):
     def move(self, destination, board, theoretical_move=False):
         super().move(destination, board, theoretical_move)
         # Check for pawn promotion
-        if ((self.color == 'white' and self.position[0] == self.board.white_promotion_row) or (self.color == 'black' and self.position[0] == self.board.black_promotion_row)) and not theoretical_move:
+        # Check for pawn promotion
+        if self.color == 'white' and self.position[0] == self.board.white_promotion_row and not theoretical_move:
             self.promote()
+        elif self.color == 'black' and self.position[0] == self.board.black_promotion_row and not theoretical_move:
+            self.promote(is_ai=True)
 
-    def promote(self):
-        # Ask the player for the type of piece they want
-        piece_type = input("Promote pawn to (Q/R/B/N): ")
+    def promote(self, is_ai=False):
+        if is_ai:
+            # If the promotion is for the AI, always promote to a queen
+            piece_type = 'Q'
+        else:
+            # If the promotion is for the human player, ask for the piece type
+            piece_type = input("Promote pawn to (Q/R/B/N): ")
 
         # Remove the pawn from the board
         self.board.set_piece(None, self.position[0], self.position[1])
