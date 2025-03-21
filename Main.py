@@ -74,7 +74,6 @@ def main():
                 board.is_game_over = True
 
         # Check if it's the AI player's turn
-        # Check if it's the AI player's turn
         if board.get_current_player_color() == 'black' and not board.is_game_over:
             # Make the AI move
             ai_move = get_best_move(board, depth=3)  # Adjust the depth as needed
